@@ -369,6 +369,7 @@ w2v_dir = 'embeddings/corpus_train_test_correction_word_dic_min_coun_1_iter_5000
 
 embedding_matrix_wv = embd(embedding_dim, w2v_dir)
 
+#http://fauconnier.github.io/
 w2v_2_dir = 'embeddings/frWac.txt'
 
 embedding_matrix_frWac = embd(embedding_dim, w2v_2_dir)
