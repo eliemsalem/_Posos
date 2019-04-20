@@ -373,6 +373,7 @@ w2v_2_dir = 'embeddings/frWac.txt'
 
 embedding_matrix_frWac = embd(embedding_dim, w2v_2_dir)
 
+#https://fasttext.cc/docs/en/pretrained-vectors.html
 wiki_dir = 'embeddings/wiki.fr/wiki.fr.vec'
 
 embedding_matrix_wiki = embd(embedding_dim2, wiki_dir)
