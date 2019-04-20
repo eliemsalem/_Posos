@@ -380,7 +380,7 @@ embedding_matrix_wiki = embd(embedding_dim2, wiki_dir)
 
 num_epochs = 50
 batch_size = 102
-
+##
 ppl1 = Pipeline([
     ("MODEL_WV", KerasClassifier(MODEL_WV, epochs=num_epochs + 50,
                                  batch_size=batch_size, verbose=1, shuffle=False))])
