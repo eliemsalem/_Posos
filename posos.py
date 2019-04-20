@@ -6,82 +6,63 @@ Created on Sun Dec  2 14:50:42 2018
 @author: elie
 """
 
-#Millions of questions are asked every year about drugs. There is a limited number of query types but the same question could be asked in many ways. Therefore, understanding what information people expect when asking a question is a great challenge. The goal of Posos’ challenge is to predict for each question its associated intent.
+# Millions of questions are asked every year about drugs. There is a limited number of query types but the same question could be asked in many ways. Therefore, understanding what information people expect when asking a question is a great challenge. The goal of Posos’ challenge is to predict for each question its associated intent.
 #
-#The input data (N=8028) is a French written list of questions. Each line consists of a unique ID followed by one question. the question came from different source like : web scraping like doctisimo, doctor, pharmacist. They correspond to:
+# The input data (N=8028) is a French written list of questions. Each line consists of a unique ID followed by one question. the question came from different source like : web scraping like doctisimo, doctor, pharmacist. They correspond to:
 #
 #    ID: line number. Relates to the line number in the output file.
 #    Question : the question whose intent has to be predicted.
 #
-#Below is an example of the input file content:
+# Below is an example of the input file content:
 #
-#1;Est-ce qu'il existe une forme adaptée aux enfants de 5ans du Micropakine ?
-#2;laroxyl à doses faibles pour le stress ?
-#The output file contains the intent associated to each ID.
-#They correspond to the line number and the intent identification number.
-#ID;intention
-#1;44
-#2;31
+# 1;Est-ce qu'il existe une forme adaptée aux enfants de 5ans du Micropakine ?
+# 2;laroxyl à doses faibles pour le stress ?
+# The output file contains the intent associated to each ID.
+# They correspond to the line number and the intent identification number.
+# ID;intention
+# 1;44
+# 2;31
 #
-#Intents are homogeneously distributed between training and test files (N=2035).
+# Intents are homogeneously distributed between training and test files (N=2035).
 #
-#Questions must be classified according to a list of 52 different intent categories. Each intent matches an anonymized id number between 0 and 51 distributed as follows:
+# Questions must be classified according to a list of 52 different intent categories. Each intent matches an anonymized id number between 0 and 51 distributed as follows:
 #
 #    a list of 50 predefined intents
 #    a "multiple" category (n°39), used for questions with several intents
 #    a "other" category (n°1), for questions that don't match any of the 50 predefined intents
 #
-#Métrique : Accuracy
-
+# Métrique : Accuracy
 
 
 from keras.wrappers.scikit_learn import KerasClassifier
 
 from sklearn.ensemble import VotingClassifier
-from sklearn.ensemble import ExtraTreesClassifier
-from keras.models import load_model
 from sklearn.pipeline import Pipeline
-from keras.models import Sequential
-from keras.layers import Embedding, Flatten, Dense, SimpleRNN, LSTM, GRU, CuDNNLSTM, CuDNNLSTM, CuDNNGRU
-from keras.layers import TimeDistributed, Bidirectional, Dropout
-from keras.layers import RepeatVector
-from keras.optimizers import Adam, Adagrad
-from keras import regularizers
+from keras.layers import CuDNNGRU
+from keras.optimizers import Adam
 from keras.models import Model
-from keras.layers import Embedding, Flatten, Dense, SimpleRNN, LSTM, GRU, Conv2D, MaxPool2D
-from keras.layers import TimeDistributed, Bidirectional, Dropout, Input, Concatenate
-from keras.layers import RepeatVector, Reshape
+from keras.layers import Embedding, Flatten, Dense,  Conv2D, MaxPool2D
+from keras.layers import Dropout, Input, Concatenate
+from keras.layers import Reshape
 import numpy as np
 import pandas as pd
-import re, string, unicodedata
-from itertools import product
+import re, string
 from itertools import chain
-from sklearn.model_selection import StratifiedShuffleSplit
 from sklearn.utils import class_weight
-from sklearn.metrics import confusion_matrix
-from pylab import rcParams
+
 from keras.preprocessing.text import Tokenizer
-from keras.preprocessing.sequence import pad_sequences
 import numpy as np
 from tensorflow import keras
 import os
-from typing import Any
-
+from keras.utils import to_categorical
 layers = keras.layers
-import unidecode
-from sklearn.metrics import f1_score
-from sklearn.manifold import TSNE
-import gensim
-
-
-
 
 
 
 def embd(embedding_dim, dir):
     embeddings_index = {}
-    f = open(os.path.join(dir),encoding="utf-8")
-    word=[]
+    f = open(os.path.join(dir), encoding="utf-8")
+    word = []
     for line in f:
         values = line.split()
         word = values[0]
@@ -91,28 +72,27 @@ def embd(embedding_dim, dir):
     f.close()
     print('Found %s word vectors.' % len(embeddings_index))
     embedding_matrix_wv = np.zeros((len(word_index), embedding_dim))
-    word_not_in=[]
-    word_in=[]
+    word_not_in = []
+    word_in = []
     print(embedding_matrix_wv.shape)
     for word, i in word_index.items():
         if i < len(word_index):
             embedding_vector = embeddings_index.get(word)
             if embedding_vector is None:
-                word_not_in= word_not_in+ [word]
-                #Whether or not the input value 0 is a special "padding" value that should be masked out.
-                #This is useful when using recurrent layers which may take variable length input.
-                #If this is True then all subsequent layers in the model need to support masking or an exception
-                #will be raised. If mask_zero is set to True, as a consequence, index 0 cannot be used in the vocabulary
-                #(input_dim should equal size of vocabulary + 1).
-                #embedding_matrix[i]= np.random.normal(size= embedding_dim)
+                word_not_in = word_not_in + [word]
+                # Whether or not the input value 0 is a special "padding" value that should be masked out.
+                # This is useful when using recurrent layers which may take variable length input.
+                # If this is True then all subsequent layers in the model need to support masking or an exception
+                # will be raised. If mask_zero is set to True, as a consequence, index 0 cannot be used in the vocabulary
+                # (input_dim should equal size of vocabulary + 1).
+                # embedding_matrix[i]= np.random.normal(size= embedding_dim)
             else:
                 embedding_matrix_wv[i] = embedding_vector
-                word_in= word_in+ [word]
+                word_in = word_in + [word]
 
     print(len(word_not_in))
     print(len(word_in))
     return embedding_matrix_wv
-
 
 
 def score_function(y_true, y_pred):
@@ -132,7 +112,6 @@ def is_number_tryexcept(s):
         return True
     except ValueError:
         return False
-
 
 
 def count_in_vocab(text, vocab):
@@ -338,13 +317,13 @@ def model_emd_normal(embedding_dim=600):
     return model
 
 
-X_train = pd.read_csv('all_data.csv', sep='\t', index_col=False)
-y_train = X_train['intention']
+X_train = pd.read_csv('Data/input_train.csv', sep=';', index_col=False)
+y_train = pd.read_csv('Data/challenge_output_data_training_file_predict_the_expected_answer.csv', sep=';', index_col=False)
 X_train['question'] = X_train['question'].map(lambda x: clean_text(x, stop=False, transforme_number=True))
 
-X_train = X_train.drop(['intention'], axis=1)
+y_train=y_train.intention
 
-dic_correction = pd.read_csv('correction_mots_avec_accent.csv', sep=';', index_col=False)
+dic_correction = pd.read_csv('Data/correction_mots_avec_accent.csv', sep=';', index_col=False)
 dic_correction.A_remplacer = dic_correction.A_remplacer.map(lambda x: clean_text(str(x)))
 correction_of_word = dict(zip(dic_correction.A_corriger, dic_correction.A_remplacer))
 d2 = {r'(\b){}(\b)'.format(k): r'\1{}\2'.format(v) for k, v in correction_of_word.items()}
@@ -352,62 +331,51 @@ X_train = X_train.replace({'question': d2}, regex=True)
 
 # Same as train : Read,  clean and correct the data
 
-X_test = pd.read_csv('data/input_test.csv', sep=';', index_col=False)
+X_test = pd.read_csv('Data/input_test.csv', sep=';', index_col=False)
 X_test['question'] = X_test['question'].map(lambda x: clean_text(x, stop=False))
 X_test = X_test.replace({'question': d2}, regex=True)
 ID = X_test.ID
 
-
-
-
-
-lab =y_train
-class_weights = class_weight.compute_class_weight('balanced',np.unique(lab),lab)
-class_weights_dic=dict(zip(np.unique(lab),class_weights ))
-class_weights_exp=np.exp(class_weights)
-
-
+lab = y_train
+class_weights = class_weight.compute_class_weight('balanced', np.unique(lab), lab)
+class_weights_dic = dict(zip(np.unique(lab), class_weights))
+class_weights_exp = np.exp(class_weights)
 
 result = X_train.append(X_test)
-max_seq_len =120
-vocab_size =8948
+max_seq_len = 120
+vocab_size = 8948
 
-tokenizer = Tokenizer(num_words=vocab_size )
+tokenizer = Tokenizer(num_words=vocab_size)
 tokenizer.fit_on_texts(result.question)
 
 x_train = tokenizer.texts_to_sequences(X_train.question)
 x_train = keras.preprocessing.sequence.pad_sequences(x_train, maxlen=max_seq_len)
 
-
 x_test = tokenizer.texts_to_sequences(X_test.question)
 x_test = keras.preprocessing.sequence.pad_sequences(x_test, maxlen=max_seq_len)
-
 
 word_index = tokenizer.word_index
 len(word_index)
 
 
-from keras.utils import to_categorical
+
 y_train0 = to_categorical(y_train)
-#y_val0=y_val
+# y_val0=y_val
 lab0 = to_categorical(lab)
 
-
-
-embedding_dim=500
-embedding_dim2=300
-w2v_dir = 'corpus_train_test_correction_word_dic_min_coun_1_iter_5000_w2v_sg1_size_500.txt'
+embedding_dim = 500
+embedding_dim2 = 300
+w2v_dir = 'embeddings/corpus_train_test_correction_word_dic_min_coun_1_iter_5000_w2v_sg1_size_500.txt'
 
 embedding_matrix_wv = embd(embedding_dim, w2v_dir)
 
-w2v_2_dir = 'data/frWac.txt'
+w2v_2_dir = 'embeddings/frWac.txt'
 
-embedding_matrix_frWac= embd(embedding_dim, w2v_2_dir)
+embedding_matrix_frWac = embd(embedding_dim, w2v_2_dir)
 
-wiki_dir = 'data/wiki.fr/wiki.fr.vec'
+wiki_dir = 'embeddings/wiki.fr/wiki.fr.vec'
 
-embedding_matrix_wiki=embd(embedding_dim2, wiki_dir)
-
+embedding_matrix_wiki = embd(embedding_dim2, wiki_dir)
 
 num_epochs = 50
 batch_size = 102
@@ -440,14 +408,9 @@ eclf = VotingClassifier(
                 ('model_emd_normal', ppl5), ('MODEL_frWac', ppl6)], voting='soft',
     weights=[1.0, 4.0, 2.0, 3.0, 2.0, 3.0])
 
-
 eclf = eclf.fit(x_train, lab)
 eclf.score(x_train, lab)
 
-
-
 y_test_pred = eclf.predict(x_test)
 sub = pd.DataFrame(np.column_stack((ID, y_test_pred)), columns=['ID', 'intention'])
-sub.to_csv('5Models_12_04_2019_.csv', index=False, sep=';')
-
-
+sub.to_csv('submit/5Models_12_04_2019_.csv', index=False, sep=';')
