@@ -23,6 +23,7 @@ Created on Sun Dec  2 14:50:42 2018
 # 1;44
 # 2;31
 #
+#
 # Intents are homogeneously distributed between training and test files (N=2035).
 #
 # Questions must be classified according to a list of 52 different intent categories. Each intent matches an anonymized id number between 0 and 51 distributed as follows:
