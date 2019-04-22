@@ -316,12 +316,17 @@ def model_emd_normal(embedding_dim=600):
     model.compile(optimizer=adam, loss='categorical_crossentropy', metrics=['accuracy'])
     return model
 
+#Read the train data and the labels
 
 X_train = pd.read_csv('Data/input_train.csv', sep=';', index_col=False)
 y_train = pd.read_csv('Data/challenge_output_data_training_file_predict_the_expected_answer.csv', sep=';', index_col=False)
+# cleaning the text in train with the function clean_text
 X_train['question'] = X_train['question'].map(lambda x: clean_text(x, stop=False, transforme_number=True))
 
 y_train=y_train.intention
+
+#Read a dictionnairie to replace uncorrect word by correct word.
+# The correction is done with google scheet.
 
 dic_correction = pd.read_csv('Data/correction_mots_avec_accent.csv', sep=';', index_col=False)
 dic_correction.A_remplacer = dic_correction.A_remplacer.map(lambda x: clean_text(str(x)))
@@ -336,17 +341,17 @@ X_test['question'] = X_test['question'].map(lambda x: clean_text(x, stop=False))
 X_test = X_test.replace({'question': d2}, regex=True)
 ID = X_test.ID
 
-lab = y_train
-class_weights = class_weight.compute_class_weight('balanced', np.unique(lab), lab)
-class_weights_dic = dict(zip(np.unique(lab), class_weights))
-class_weights_exp = np.exp(class_weights)
 
-result = X_train.append(X_test)
+#class_weights = class_weight.compute_class_weight('balanced', np.unique(lab), lab)
+#class_weights_dic = dict(zip(np.unique(lab), class_weights))
+#class_weights_exp = np.exp(class_weights)
+
+all_text = X_train.append(X_test)
 max_seq_len = 120
 vocab_size = 8948
 
 tokenizer = Tokenizer(num_words=vocab_size)
-tokenizer.fit_on_texts(result.question)
+tokenizer.fit_on_texts(all_text.question)
 
 x_train = tokenizer.texts_to_sequences(X_train.question)
 x_train = keras.preprocessing.sequence.pad_sequences(x_train, maxlen=max_seq_len)
@@ -355,13 +360,8 @@ x_test = tokenizer.texts_to_sequences(X_test.question)
 x_test = keras.preprocessing.sequence.pad_sequences(x_test, maxlen=max_seq_len)
 
 word_index = tokenizer.word_index
-len(word_index)
 
 
-
-y_train0 = to_categorical(y_train)
-# y_val0=y_val
-lab0 = to_categorical(lab)
 
 embedding_dim = 500
 embedding_dim2 = 300
@@ -374,7 +374,7 @@ w2v_2_dir = 'embeddings/frWac.txt'
 
 embedding_matrix_frWac = embd(embedding_dim, w2v_2_dir)
 
-#https://fasttext.cc/docs/en/pretrained-vectors.html
+#https://dl.fbaipublicfiles.com/fasttext/vectors-wiki/wiki.fr.vec
 wiki_dir = 'embeddings/wiki.fr/wiki.fr.vec'
 
 embedding_matrix_wiki = embd(embedding_dim2, wiki_dir)
@@ -410,8 +410,8 @@ eclf = VotingClassifier(
                 ('model_emd_normal', ppl5), ('MODEL_frWac', ppl6)], voting='soft',
     weights=[1.0, 4.0, 2.0, 3.0, 2.0, 3.0])
 
-eclf = eclf.fit(x_train, lab)
-eclf.score(x_train, lab)
+eclf = eclf.fit(x_train, y_train)
+eclf.score(x_train, y_train)
 
 y_test_pred = eclf.predict(x_test)
 sub = pd.DataFrame(np.column_stack((ID, y_test_pred)), columns=['ID', 'intention'])
