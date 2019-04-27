@@ -54,6 +54,7 @@ from keras.preprocessing.text import Tokenizer
 import numpy as np
 from tensorflow import keras
 import os
+import gensim
 from keras.utils import to_categorical
 layers = keras.layers
 
@@ -93,6 +94,26 @@ def embd(embedding_dim, dir):
     print(len(word_not_in))
     print(len(word_in))
     return embedding_matrix_wv
+
+def embd_bin(embedding_dim, dir):
+    #load word2vec pretrained
+    model = gensim.models.KeyedVectors.load_word2vec_format(dir,binary=True, unicode_errors='ignore',encoding='utf8',limit=2000000)
+    embedding_matrix_frWac = np.zeros((len(word_index), embedding_dim))
+    word_not_in=[]
+    word_in=[]
+    print(embedding_matrix_frWac.shape)
+    for word, i in word_index.items():
+        if i < len(word_index):
+            try:
+                embedding_vector = model.get_vector(word)
+                embedding_matrix_frWac[i] = embedding_vector
+                word_in= word_in+ [word]
+            except:
+                #If word not in the pretrained model replace the vector with the pretrained model from the train and test set bild befor
+                embedding_vector = model_Word2Vec.wv.get_vector(word)
+                embedding_matrix_frWac[i] = embedding_vector
+                word_not_in= word_not_in+ [word]
+    return embedding_matrix_frWac
 
 
 def score_function(y_true, y_pred):
@@ -175,7 +196,7 @@ def MODEL_WV(embedding_dim=500):
     return model
 
 
-def MODEL_frWac(embedding_dim=500):
+def MODEL_frWac(embedding_dim=200):
     inp = Input(shape=(max_seq_len,))
     x = Embedding(len(word_index), embedding_dim, weights=[embedding_matrix_frWac], trainable=True)(inp)
     x = Dropout(0.9)(x)
@@ -347,6 +368,14 @@ ID = X_test.ID
 #class_weights_exp = np.exp(class_weights)
 
 all_text = X_train.append(X_test)
+
+#To replace the vectors of the unknown word in the embedding, we creat a word2vect with gensim
+#First creat the corpus with Train and the Test set
+corpus= all_text.question.map(lambda x: x.split(' ')).values.tolist()
+model_Word2Vec = gensim.models.Word2Vec(corpus, min_count=1, negative=20, window=10,  compute_loss=True, size =200,sg=1,iter=10,sample=0.00001,workers=12)
+
+
+
 max_seq_len = 120
 vocab_size = 8948
 
@@ -369,10 +398,11 @@ w2v_dir = 'embeddings/corpus_train_test_correction_word_dic_min_coun_1_iter_5000
 
 embedding_matrix_wv = embd(embedding_dim, w2v_dir)
 
-#http://fauconnier.github.io/
-w2v_2_dir = 'embeddings/frWac.txt'
+#http://embeddings.net/frWac_non_lem_no_postag_no_phrase_200_cbow_cut0.bin
+w2v_2_dir = 'embeddings/frWac_non_lem_no_postag_no_phrase_200_cbow_cut0.bin'
 
-embedding_matrix_frWac = embd(embedding_dim, w2v_2_dir)
+embedding_matrix_frWac = embd_bin(200, 'embeddings/frWac_non_lem_no_postag_no_phrase_200_cbow_cut0.bin')
+
 
 #https://dl.fbaipublicfiles.com/fasttext/vectors-wiki/wiki.fr.vec
 wiki_dir = 'embeddings/wiki.fr/wiki.fr.vec'
@@ -402,17 +432,17 @@ ppl5 = Pipeline([
                                          batch_size=batch_size, verbose=1, shuffle=False))])
 
 ppl6 = Pipeline([
-    ("MODEL_frWac", KerasClassifier(MODEL_frWac, epochs=num_epochs + 50,
+    ("MODEL_frWac", KerasClassifier(MODEL_frWac, epochs=num_epochs + 80,
                                     batch_size=batch_size, verbose=1, shuffle=False))])
 
 eclf = VotingClassifier(
     estimators=[('MODEL_WV', ppl1), ('MODEL_wiki', ppl2), ('model_cv_wv', ppl3), ('model_cv_wiki', ppl4),
                 ('model_emd_normal', ppl5), ('MODEL_frWac', ppl6)], voting='soft',
-    weights=[1.0, 4.0, 2.0, 3.0, 2.0, 3.0])
+    weights=[4.0,1.0,1.0,2.0,3.0,6.0])
 
 eclf = eclf.fit(x_train, y_train)
 eclf.score(x_train, y_train)
 
 y_test_pred = eclf.predict(x_test)
 sub = pd.DataFrame(np.column_stack((ID, y_test_pred)), columns=['ID', 'intention'])
-sub.to_csv('submit/5Models_12_04_2019_.csv', index=False, sep=';')
+sub.to_csv('submit/5Models_27_04_2019_.csv', index=False, sep=';')
