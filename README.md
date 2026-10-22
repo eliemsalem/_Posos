@@ -40,11 +40,12 @@ Score officiel calculé par la plateforme sur le jeu de test (labels non publics
 | Version | Approche | Score test |
 |---|---|---|
 | 2019 | Ensemble de 6 réseaux GRU / CNN sur embeddings word2vec | 0,7583 |
-| **2026** | **CamemBERT fine-tuné** (un seul modèle) | **0,7898** |
+| 2026 | CamemBERT fine-tuné (un seul modèle) | 0,7898 |
+| **2026** | **Ensemble de 3 CamemBERT** (base, bio, v2) | **0,8124** |
 | *Référence* | *Benchmark de Posos (CNN)* | *0,8291* |
 
-Un seul transformer pré-entraîné en français fait mieux que l'ensemble de 2019,
-avec un code bien plus court.
+Un seul transformer pré-entraîné en français fait déjà mieux que l'ensemble de 2019 ;
+la moyenne de trois variantes de CamemBERT gagne encore 2,3 points.
 [Classement public](https://challengedata.ens.fr/participants/challenges/17/ranking/public)
 
 ## Évolution
@@ -60,14 +61,15 @@ quand l'étape a été soumise, le score officiel sur le test.
 | 4 | 2026 | CamemBERT-base, 4 epochs, texte brut | 62,4 % | |
 | 5 | 2026 | + 8 epochs, perte pondérée par classe | 76,9 % | |
 | 6 | 2026 | + corrections orthographe/accents (dictionnaire de 2019) | 77,3 % | |
-| 7 | 2026 | + learning rate 5e-5 au lieu de 2e-5 | 80,4 % | **0,7898** |
+| 7 | 2026 | + learning rate 5e-5 au lieu de 2e-5 | 80,4 % | 0,7898 |
+| 8 | 2026 | Ensemble : CamemBERT-base + CamemBERT-bio (médical) + CamemBERTv2 | 82,1 % | **0,8124** |
 
 ```mermaid
 xychart-beta
     title "Accuracy sur la validation interne (%)"
-    x-axis ["1 GRU", "2 GRU/CNN", "3 Ensemble", "4 CamemBERT", "5 +poids", "6 +accents", "7 +lr"]
+    x-axis ["1 GRU", "2 GRU/CNN", "3 Ensemble", "4 CamemBERT", "5 +poids", "6 +accents", "7 +lr", "8 Ensemble"]
     y-axis "Accuracy (%)" 60 --> 85
-    bar [66.8, 72.1, 75.1, 62.4, 76.9, 77.3, 80.4]
+    bar [66.8, 72.1, 75.1, 62.4, 76.9, 77.3, 80.4, 82.1]
 ```
 
 Les validations de 2019 (10 % des données) et de 2026 (15 %) ne portent pas sur
@@ -94,6 +96,10 @@ l'étape 2, le graphique montre le meilleur modèle seul.
   (1 861 entrées, par ex. *gelules* → *gélules*).
 - **Évaluation** : une validation stratifiée de 15 % sert à choisir les réglages ;
   le modèle final est ensuite réentraîné sur toutes les données.
+- **Ensemble** : comme en 2019, moyenner des modèles qui se trompent différemment
+  paie. CamemBERT-bio (pré-entraîné sur des textes biomédicaux) et CamemBERTv2
+  sont chacun meilleurs que CamemBERT-base, et leur moyenne avec lui corrige
+  environ 20 erreurs de plus sur la validation.
 - **Réglages qui ont compté** : un learning rate de 5e-5 au lieu de 2e-5 (+3 points
   en validation) et une perte pondérée par classe, les 51 intentions étant très
   déséquilibrées (une classe couvre 22 % des questions).

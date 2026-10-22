@@ -1,8 +1,8 @@
 # Posos — version CamemBERT
 
 Fine-tuning de CamemBERT pour classer les questions du challenge Posos parmi
-51 intentions. Score test : **0,7898**
-(validation interne : accuracy 0,804, F1 macro 0,707).
+51 intentions. Score test : **0,8124** avec un ensemble de trois modèles
+(0,7898 pour CamemBERT-base seul).
 
 ## Installation
 
@@ -32,6 +32,18 @@ python train.py --full --epochs 6 --lr 5e-5 --class-weights --clean --out model_
 
 # 3. Prédire le jeu de test -> submission.csv (+ probabilités)
 python predict.py --model model_full --clean
+```
+
+Ensemble (meilleur score) : entraîner les trois modèles de la même façon, puis
+moyenner leurs probabilités.
+
+```bash
+# --model almanach/camembert-bio-base (8 epochs) et almanach/camembertv2-base (6 epochs)
+python ensemble.py val model_val model_bio_val model_v2_val      # comparer les combinaisons
+python predict.py --model model_bio_full --clean --out bio.csv   # -> bio_probs.npy
+python predict.py --model model_v2_full --clean --out v2.csv     # -> v2_probs.npy
+python predict.py --model model_full --clean --out base.csv      # -> base_probs.npy
+python ensemble.py test base_probs.npy bio_probs.npy v2_probs.npy   # -> submission.csv
 ```
 
 Environ 5 minutes par entraînement sur une GTX 1080 Ti.
