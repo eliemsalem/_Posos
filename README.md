@@ -8,7 +8,7 @@ l'intention de la personne parmi **51 catégories** (métrique : *accuracy*).
 > « laroxyl à doses faibles pour le stress ? » → intention 31
 
 🏆 **Prix Challenge Data 2018 — Meilleur participant** du challenge *Predict the
-expected answer!* proposé par Posos (ENS / Collège de France).
+expected answer!* proposé par Posos.
 
 <p align="center">
   <img src="docs/attestation.jpeg" alt="Attestation Prix 2018 Challenge Data, meilleur participant, challenge Posos" width="520">
