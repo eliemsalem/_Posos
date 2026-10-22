@@ -20,6 +20,33 @@ Un seul transformer pré-entraîné en français fait mieux que l'ensemble de 20
 avec un code bien plus court.
 [Classement public](https://challengedata.ens.fr/participants/challenges/17/ranking/public)
 
+## Évolution
+
+Chaque étape, avec l'accuracy sur la validation interne (choix des réglages) et,
+quand l'étape a été soumise, le score officiel sur le test.
+
+| # | Année | Étape | Validation | Test |
+|---|---|---|---|---|
+| 1 | 2019 | Un réseau GRU, texte nettoyé, embeddings word2vec | ≈ 66,8 % | |
+| 2 | 2019 | Réseaux GRU / CNN réglés, embeddings frWac et Wikipédia mélangés à un word2vec entraîné sur le corpus | 68,7 – 72,1 % | |
+| 3 | 2019 | Ensemble pondéré de 6 modèles | ≈ 75,1 % | **0,7583** |
+| 4 | 2026 | CamemBERT-base, 4 epochs, texte brut | 62,4 % | |
+| 5 | 2026 | + 8 epochs, perte pondérée par classe | 76,9 % | |
+| 6 | 2026 | + corrections orthographe/accents (dictionnaire de 2019) | 77,3 % | |
+| 7 | 2026 | + learning rate 5e-5 au lieu de 2e-5 | 80,4 % | **0,7898** |
+
+```mermaid
+xychart-beta
+    title "Accuracy sur la validation interne (%)"
+    x-axis ["1 GRU", "2 GRU/CNN", "3 Ensemble", "4 CamemBERT", "5 +poids", "6 +accents", "7 +lr"]
+    y-axis "Accuracy (%)" 60 --> 85
+    bar [66.8, 72.1, 75.1, 62.4, 76.9, 77.3, 80.4]
+```
+
+Les validations de 2019 (10 % des données) et de 2026 (15 %) ne portent pas sur
+les mêmes questions : seules les colonnes « Test » se comparent directement. Pour
+l'étape 2, le graphique montre le meilleur modèle seul.
+
 ## Contenu du dépôt
 
 | Dossier | Contenu |

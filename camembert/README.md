@@ -44,14 +44,9 @@ Environ 5 minutes par entraînement sur une GTX 1080 Ti.
 | `ensemble.py` | Évaluation d'ensembles de modèles sur la validation, moyenne des probabilités de test |
 | `subs.py` | Registre local des soumissions et de leurs scores ; estime le score d'une nouvelle soumission à partir de son désaccord avec les soumissions déjà notées |
 
-## Historique des réglages (validation interne)
+## Historique des réglages
 
-| Réglages | Accuracy | F1 macro |
-|---|---|---|
-| camembert-base, 4 epochs, texte brut | 0,624 | 0,20 |
-| + 8 epochs, perte pondérée par classe | 0,769 | 0,61 |
-| + corrections orthographe/accents | 0,773 | 0,61 |
-| + learning rate 5e-5 (au lieu de 2e-5) | **0,804** | **0,71** |
+Voir l'[évolution complète 2019 → 2026](../README.md#évolution) dans le README principal.
 
 Remarque : sur une GTX 1080 Ti (architecture Pascal, sans Tensor Cores),
 l'entraînement en fp16 est environ 45 % plus lent qu'en fp32. Il est donc
