@@ -7,6 +7,13 @@ l'intention de la personne parmi **51 catégories** (métrique : *accuracy*).
 > « Est-ce qu'il existe une forme adaptée aux enfants de 5 ans du Micropakine ? » → intention 44
 > « laroxyl à doses faibles pour le stress ? » → intention 31
 
+🏆 **Prix Challenge Data 2018 — Meilleur participant** du challenge *Predict the
+expected answer!* proposé par Posos (ENS / Collège de France).
+
+<p align="center">
+  <img src="docs/attestation.jpeg" alt="Attestation Prix 2018 Challenge Data, meilleur participant, challenge Posos" width="520">
+</p>
+
 ## Résultats
 
 Score officiel calculé par la plateforme sur le jeu de test (labels non publics) :
