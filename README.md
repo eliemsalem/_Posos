@@ -14,6 +14,25 @@ expected answer!* proposé par Posos.
   <img src="docs/attestation.jpeg" alt="Attestation Prix 2018 Challenge Data, meilleur participant, challenge Posos" width="520">
 </p>
 
+## Contexte
+
+Plus de 6 000 médicaments sont commercialisés en France, et leur mauvais usage cause
+plus de 144 000 hospitalisations par an. Patients comme professionnels de santé
+posent chaque année des millions de questions sur les médicaments. Les types de
+question sont en nombre limité (effets secondaires, composition,
+contre-indications, posologie…), mais une même question peut se formuler de
+mille façons. Comprendre **quelle information la personne attend** est la première
+étape pour lui répondre.
+
+- **Entrée** : 8 028 questions d'entraînement en français, souvent écrites
+  rapidement (fautes, abréviations, absence d'accents), et 2 035 questions de test.
+- **Sortie** : l'identifiant anonymisé de l'intention (0 à 50).
+- **Benchmark de Posos** : un CNN au niveau des mots (vecteurs de dimension 128,
+  filtres de taille 3, 4 et 5, max-pooling, dropout 0,5), annoncé à 82 % sur un
+  jeu de 10 000 exemples. Les organisateurs suggéraient de pré-entraîner les
+  vecteurs de mots sur un plus grand corpus (word2vec) ou de détecter des
+  propriétés comme les noms de médicaments.
+
 ## Résultats
 
 Score officiel calculé par la plateforme sur le jeu de test (labels non publics) :
@@ -22,6 +41,7 @@ Score officiel calculé par la plateforme sur le jeu de test (labels non publics
 |---|---|---|
 | 2019 | Ensemble de 6 réseaux GRU / CNN sur embeddings word2vec | 0,7583 |
 | **2026** | **CamemBERT fine-tuné** (un seul modèle) | **0,7898** |
+| *Référence* | *Benchmark de Posos (CNN)* | *0,8291* |
 
 Un seul transformer pré-entraîné en français fait mieux que l'ensemble de 2019,
 avec un code bien plus court.
