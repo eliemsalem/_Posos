@@ -1,0 +1,11 @@
+.idea/
+__pycache__/
+*.pyc
+# données du challenge (non redistribuables), modèles, soumissions
+**/data/input_*.csv
+**/data/output_*.csv
+**/Data/input_*.csv
+camembert/model*/
+camembert/submissions/
+camembert/submission*.csv
+camembert/submission*.npy
