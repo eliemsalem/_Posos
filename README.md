@@ -4,9 +4,10 @@ Given a question written by a patient or a health professional about a medicine
 (« Peut-on prendre du Doliprane pendant la grossesse ? »), predict which of **51 intents**
 it expresses (side effects, dosage, pregnancy, contraindications, price…). Metric: accuracy.
 
-**Result: 0.7583 in 2019 → 0.8124 in 2026** on the official test set, by replacing a
-GRU/CNN + word2vec ensemble with fine-tuned French transformers, then adding a 7B LLM
-fine-tuned as a classifier.
+**Result: 0.7583 in 2019 → 0.8281 in 2026** on the official test set (843 of about
+1,018 public questions; the organisers' benchmark gets 844), by replacing a GRU/CNN +
+word2vec ensemble with fine-tuned French transformers, then adding a 7B LLM fine-tuned
+as a classifier.
 
 🏆 **Challenge Data 2018 prize — best participant** of the Posos challenge
 (*Predict the expected answer!*, ENS Challenge Data).
@@ -55,7 +56,9 @@ Pretrained models are downloaded from the Hugging Face Hub:
 |---|---|
 | 2019 — ensemble of 6 GRU/CNN networks on word2vec embeddings | 0.7583 |
 | CamemBERT-base, tuned | 0.7898 |
-| **Ensemble: CamemBERT-base + CamemBERT-bio + CamemBERTv2** | **0.8124** |
+| Ensemble: CamemBERT-base + CamemBERT-bio + CamemBERTv2 | 0.8124 |
+| **Ensemble: 4 CamemBERT + Qwen2.5-7B QLoRA (weight 2)** | **0.8281** |
+| Same + LLM arbiter on the 136 most uncertain questions (22 answers changed) | 0.8271 |
 | *Reference: organisers' benchmark (CNN)* | *0.8291* |
 
 ### Step by step (internal validation)
@@ -99,7 +102,7 @@ evaluated on fold 0 of the same cross-validation (1,606 questions):
 | Post-hoc prior correction of the class weights | +0.25 pt, within noise |
 | Label smoothing 0.1 (CamemBERT-bio, 4 folds) | −0.16 pt alone, −0.41 pt in the ensemble |
 | CamemBERTaV2 alone | no better than CamemBERT-base… but +0.42 pt in the ensemble (different errors) |
-| **LLM arbiter** for uncertain cases (Qwen2.5-Coder-14B via Ollama chooses between the two top intents) | +0.47 pt on the 4-CamemBERT ensemble (54 answers fixed, 16 broken, 720 cases), but only +0.12 pt once Qwen2.5-7B is in the ensemble: not used |
+| **LLM arbiter** for uncertain cases (Qwen2.5-Coder-14B via Ollama chooses between the two top intents) | +0.47 pt on the 4-CamemBERT ensemble (54 answers fixed, 16 broken, 720 cases), but only +0.12 pt once Qwen2.5-7B is in the ensemble; on the official test it cost one question (0.8281 → 0.8271) |
 
 ### The 51 intents, decoded
 
