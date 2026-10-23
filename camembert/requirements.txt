@@ -1,10 +1,11 @@
-# PyTorch avec support des GPU Pascal (ex. GTX 1080 Ti, sm_61) :
+# Versions that actually ran (Python 3.11, GTX 1080 Ti).
+# PyTorch with Pascal GPU support (sm_61):
 #   pip install torch==2.4.1 --index-url https://download.pytorch.org/whl/cu121
 torch==2.4.1
-transformers>=4.44,<4.46
-datasets
-scikit-learn
-pandas
-sentencepiece
-accelerate>=0.33
-evaluate
+transformers==4.45.2
+datasets==5.0.1
+accelerate==1.15.0
+scikit-learn==1.9.1
+pandas==3.1.0
+numpy==2.4.6
+sentencepiece==0.2.2

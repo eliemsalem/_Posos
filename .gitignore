@@ -1,11 +1,20 @@
 .idea/
 __pycache__/
 *.pyc
-# données du challenge (non redistribuables), modèles, soumissions
-**/data/input_*.csv
-**/data/output_*.csv
-**/Data/input_*.csv
+# challenge data (not redistributable): only the hand-made correction dictionary is kept
+**/data/*
+!camembert/data/correction.csv
+!2019_keras/Data/
+# models, cross-validation folds, submissions, probabilities, logs
 camembert/model*/
+camembert/cv_*/
 camembert/submissions/
-camembert/submission*.csv
-camembert/submission*.npy
+camembert/submission*
+*.npy
+*.npz
+*.bin
+*.safetensors
+*.h5
+*.log
+# agent outputs derived from the data (only the decoded intent names are published)
+camembert/agent/intentions_*.json
