@@ -1,0 +1,206 @@
+{
+ "0": {
+  "nom": "Alternative thérapeutique",
+  "description": "Par quoi remplacer un médicament (rupture, échec, non remboursé)."
+ },
+ "1": {
+  "nom": "Autre",
+  "description": "Catégorie « autre » officielle du challenge : questions hors des 50 intentions."
+ },
+ "2": {
+  "nom": "Bilan et surveillance biologique",
+  "description": "Prises de sang, examens à faire avant ou pendant un traitement."
+ },
+ "3": {
+  "nom": "Cause d'une rupture de stock",
+  "description": "Pourquoi un médicament manque (et non s'il est disponible : voir 24)."
+ },
+ "4": {
+  "nom": "Classe thérapeutique",
+  "description": "À quelle famille appartient un médicament."
+ },
+ "5": {
+  "nom": "Composition",
+  "description": "Principe actif, excipients, contient-il telle substance."
+ },
+ "6": {
+  "nom": "Conditionnement",
+  "description": "Taille des boîtes, nombre de comprimés, volume des flacons."
+ },
+ "7": {
+  "nom": "Conservation",
+  "description": "Règles et durée de conservation (frigo, température)."
+ },
+ "8": {
+  "nom": "Conditions de délivrance",
+  "description": "Ordonnance obligatoire, achat en pharmacie ou en ligne, quantités délivrées."
+ },
+ "9": {
+  "nom": "Conditions de prescription",
+  "description": "Qui peut prescrire, règles de prescription et de renouvellement."
+ },
+ "10": {
+  "nom": "Changement de traitement",
+  "description": "Comment passer d'un médicament à un autre."
+ },
+ "11": {
+  "nom": "Que faire face à un effet indésirable",
+  "description": "Conduite à tenir quand un effet gênant apparaît (et non sa simple description : voir 28)."
+ },
+ "12": {
+  "nom": "Que faire après une erreur de prise",
+  "description": "Vomissement après la prise, surdosage, plaquettes enchaînées, retard."
+ },
+ "13": {
+  "nom": "Oubli de prise",
+  "description": "Conduite à tenir après un oubli (surtout de pilule)."
+ },
+ "14": {
+  "nom": "Mode d'emploi",
+  "description": "Comment prendre, utiliser, commencer ou arrêter un médicament."
+ },
+ "15": {
+  "nom": "Utilisation d'un patch",
+  "description": "Pose, collage et découpe des patchs."
+ },
+ "16": {
+  "nom": "Conservation après ouverture",
+  "description": "Combien de temps un produit entamé reste utilisable."
+ },
+ "17": {
+  "nom": "Rupture de la chaîne du froid",
+  "description": "Vaccin ou produit resté hors du frigo : est-il encore utilisable ?"
+ },
+ "18": {
+  "nom": "Date de mise sur le marché",
+  "description": "Depuis quand un médicament est autorisé ou commercialisé."
+ },
+ "19": {
+  "nom": "Médicament périmé",
+  "description": "Peut-on prendre un produit dont la date est dépassée."
+ },
+ "20": {
+  "nom": "Nom commercial d'une molécule",
+  "description": "Retrouver la marque ou le princeps à partir de la DCI."
+ },
+ "21": {
+  "nom": "Arrêt et sevrage",
+  "description": "Effets de l'arrêt ou de la baisse d'un traitement."
+ },
+ "22": {
+  "nom": "Information générale",
+  "description": "« C'est quoi X ? », demande d'informations vagues sur un médicament."
+ },
+ "23": {
+  "nom": "Délai d'action",
+  "description": "Au bout de combien de temps le médicament agit ou protège."
+ },
+ "24": {
+  "nom": "Disponibilité",
+  "description": "Le médicament est-il disponible, quand revient-il après une rupture."
+ },
+ "25": {
+  "nom": "Dosages disponibles",
+  "description": "Quels dosages existent pour un médicament."
+ },
+ "26": {
+  "nom": "Durée d'action",
+  "description": "Combien de temps dure l'effet d'une prise."
+ },
+ "27": {
+  "nom": "Durée des effets indésirables",
+  "description": "Combien de temps durent les effets secondaires ou le sevrage."
+ },
+ "28": {
+  "nom": "Effets indésirables",
+  "description": "Quels sont les effets secondaires, tel symptôme est-il dû au médicament. 22 % des questions."
+ },
+ "29": {
+  "nom": "Existence d'un produit",
+  "description": "Tel produit ou vaccin existe-t-il, où le trouver."
+ },
+ "30": {
+  "nom": "Forme galénique",
+  "description": "Sous quelle forme se présente un médicament (comprimé, sirop, gélule…)."
+ },
+ "31": {
+  "nom": "Indications et bienfaits",
+  "description": "À quoi sert un médicament, est-il efficace pour tel problème."
+ },
+ "32": {
+  "nom": "Quel traitement pour un symptôme",
+  "description": "On part d'un symptôme et on cherche un médicament."
+ },
+ "33": {
+  "nom": "Alcool, conduite et mode de vie",
+  "description": "Compatibilité avec l'alcool, la conduite, le soleil, les drogues."
+ },
+ "34": {
+  "nom": "Interactions médicamenteuses",
+  "description": "Peut-on associer deux médicaments ou produits."
+ },
+ "35": {
+  "nom": "Voie d'administration",
+  "description": "Comment administrer : injection, voie orale, rectale, pose."
+ },
+ "36": {
+  "nom": "Préparation et dilution",
+  "description": "Diluer, mélanger, écraser avant la prise."
+ },
+ "37": {
+  "nom": "Mécanisme d'action",
+  "description": "Comment agit le médicament dans le corps."
+ },
+ "38": {
+  "nom": "Moment de prise",
+  "description": "Matin ou soir, pendant ou hors des repas."
+ },
+ "39": {
+  "nom": "Questions multiples",
+  "description": "Catégorie « multiple » officielle : longues questions mêlant plusieurs intentions."
+ },
+ "40": {
+  "nom": "Origine des composants",
+  "description": "D'où viennent le principe actif ou les excipients (animal, naturel…)."
+ },
+ "41": {
+  "nom": "Pharmacocinétique",
+  "description": "Demi-vie, élimination, métabolisme."
+ },
+ "42": {
+  "nom": "Posologie",
+  "description": "Quelle dose, combien de prises, quelle durée de traitement."
+ },
+ "43": {
+  "nom": "Contre-indications et précautions",
+  "description": "Médicament déconseillé avec une maladie ou une allergie."
+ },
+ "44": {
+  "nom": "Grossesse, allaitement et enfants",
+  "description": "Usage chez la femme enceinte ou allaitante, chez l'enfant."
+ },
+ "45": {
+  "nom": "Générique d'un médicament",
+  "description": "Existe-t-il un générique, lequel."
+ },
+ "46": {
+  "nom": "Prix",
+  "description": "Combien coûte un médicament."
+ },
+ "47": {
+  "nom": "Remboursement",
+  "description": "Est-ce remboursé par la Sécurité sociale."
+ },
+ "48": {
+  "nom": "Risques et dangerosité",
+  "description": "Est-ce dangereux, quels risques en cas de surdosage."
+ },
+ "49": {
+  "nom": "Sécabilité",
+  "description": "Peut-on couper un comprimé ou ouvrir une gélule."
+ },
+ "50": {
+  "nom": "Substitution par un générique",
+  "description": "Le pharmacien peut-il substituer un générique."
+ }
+}

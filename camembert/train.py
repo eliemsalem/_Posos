@@ -22,7 +22,7 @@ import pandas as pd
 import torch
 from datasets import Dataset
 from sklearn.metrics import accuracy_score, f1_score
-from sklearn.model_selection import train_test_split
+from sklearn.model_selection import StratifiedKFold, train_test_split
 from sklearn.utils.class_weight import compute_class_weight
 from transformers import (
     AutoModelForSequenceClassification,
@@ -42,16 +42,18 @@ class WeightedTrainer(Trainer):
     (les classes rares pèsent plus, ce qui fait remonter le F1 macro).
     NB : la même perte pondérée sert aussi pour eval_loss."""
 
-    def __init__(self, *args, class_weights=None, **kwargs):
+    def __init__(self, *args, class_weights=None, label_smoothing=0.0, **kwargs):
         super().__init__(*args, **kwargs)
         self.class_weights = class_weights
+        self.label_smoothing = label_smoothing
 
     def compute_loss(self, model, inputs, return_outputs=False, **kwargs):
         labels = inputs.pop("labels")
         outputs = model(**inputs)
         weight = (self.class_weights.to(outputs.logits.device)
                   if self.class_weights is not None else None)
-        loss = torch.nn.functional.cross_entropy(outputs.logits, labels, weight=weight)
+        loss = torch.nn.functional.cross_entropy(outputs.logits, labels, weight=weight,
+                                                 label_smoothing=self.label_smoothing)
         return (loss, outputs) if return_outputs else loss
 
 
@@ -82,10 +84,16 @@ def main():
     ap.add_argument("--max-len", type=int, default=256)
     ap.add_argument("--lr", type=float, default=2e-5)
     ap.add_argument("--val-size", type=float, default=0.15)
+    ap.add_argument("--folds", type=int, default=0,
+                    help="validation croisée : nombre de plis (0 = découpe simple --val-size)")
+    ap.add_argument("--fold", type=int, default=0,
+                    help="pli utilisé comme validation, de 0 à --folds - 1")
     ap.add_argument("--out", default=str(HERE / "model"))
     ap.add_argument("--seed", type=int, default=42)
     ap.add_argument("--class-weights", action="store_true",
                     help="pondérer la perte par classe (compense le déséquilibre)")
+    ap.add_argument("--label-smoothing", type=float, default=0.0,
+                    help="lissage des étiquettes (ex. 0.1) : utile si des étiquettes sont ambiguës")
     ap.add_argument("--clean", action="store_true",
                     help="appliquer la correction orthographique/accents (clean.py)")
     ap.add_argument("--full", action="store_true",
@@ -122,6 +130,13 @@ def main():
     if args.full:
         train_df, val_df = df, None
         print(f"Mode --full : entraînement sur {len(train_df)} exemples, sans validation.")
+    elif args.folds:
+        # Validation croisée : en lançant les plis 0 à K-1, chaque question sert
+        # une fois de validation (prédictions "out-of-fold" sur tout le train).
+        skf = StratifiedKFold(n_splits=args.folds, shuffle=True, random_state=args.seed)
+        train_idx, val_idx = list(skf.split(df, df["label"]))[args.fold]
+        train_df, val_df = df.iloc[train_idx], df.iloc[val_idx]
+        print(f"Pli {args.fold + 1}/{args.folds} -- Train : {len(train_df)} | Validation : {len(val_df)}")
     else:
         # Découpe stratifiée : la validation garde la même répartition de classes.
         train_df, val_df = train_test_split(
@@ -186,6 +201,7 @@ def main():
         data_collator=DataCollatorWithPadding(tokenizer),
         compute_metrics=compute_metrics,
         class_weights=class_weights,
+        label_smoothing=args.label_smoothing,
     )
 
     trainer.train()
@@ -198,12 +214,19 @@ def main():
         print("\n=== Résultat sur la validation ===")
         print(f"Accuracy  : {metrics['eval_accuracy']:.4f}")
         print(f"F1 macro  : {metrics['eval_f1_macro']:.4f}")
+        # Probabilités sur la validation, pour évaluer des ensembles (ensemble.py).
+        # Colonne j = indice j du modèle = intention j (les 51 intentions sont présentes).
+        logits = trainer.predict(val_ds).predictions
+        val_probs = torch.from_numpy(logits).float().softmax(dim=-1).numpy()
 
     # On sauvegarde le meilleur modèle (ou le dernier en --full) pour predict.py
     out = Path(args.out)
     trainer.save_model(out)
     tokenizer.save_pretrained(out)
     # Réglages + scores, pour comparer les runs sans relire les logs
+    if not args.full:
+        np.save(out / "val_probs.npy", val_probs)
+        np.save(out / "val_ids.npy", val_df["ID"].values)
     (out / "run_info.json").write_text(json.dumps(
         {"args": vars(args), "metrics": metrics}, indent=2, ensure_ascii=False))
 

@@ -1,108 +1,186 @@
-# Posos — classification d'intentions de questions médicales
+# Posos — intent classification of French drug-related questions
 
-Solution au [challenge Posos](https://challengedata.ens.fr/participants/challenges/17/)
-(Challenge Data, ENS) : pour chaque question en français sur un médicament, prédire
-l'intention de la personne parmi **51 catégories** (métrique : *accuracy*).
+Given a question written by a patient or a health professional about a medicine
+(« Peut-on prendre du Doliprane pendant la grossesse ? »), predict which of **51 intents**
+it expresses (side effects, dosage, pregnancy, contraindications, price…). Metric: accuracy.
 
-> « Est-ce qu'il existe une forme adaptée aux enfants de 5 ans du Micropakine ? » → intention 44
-> « laroxyl à doses faibles pour le stress ? » → intention 31
+**Result: 0.7583 in 2019 → 0.8124 in 2026** on the official test set, by replacing a
+GRU/CNN + word2vec ensemble with fine-tuned French transformers, then adding a 7B LLM
+fine-tuned as a classifier.
 
-🏆 **Prix Challenge Data 2018 — Meilleur participant** du challenge *Predict the
-expected answer!* proposé par Posos.
+🏆 **Challenge Data 2018 prize — best participant** of the Posos challenge
+(*Predict the expected answer!*, ENS Challenge Data).
 
 <p align="center">
-  <img src="docs/attestation.jpeg" alt="Attestation Prix 2018 Challenge Data, meilleur participant, challenge Posos" width="520">
+  <img src="docs/attestation.jpeg" alt="Challenge Data 2018 prize certificate, best participant, Posos challenge" width="520">
 </p>
 
-## Contexte
+## Data
 
-Plus de 6 000 médicaments sont commercialisés en France, et leur mauvais usage cause
-plus de 144 000 hospitalisations par an. Patients comme professionnels de santé
-posent chaque année des millions de questions sur les médicaments. Les types de
-question sont en nombre limité (effets secondaires, composition,
-contre-indications, posologie…), mais une même question peut se formuler de
-mille façons. Comprendre **quelle information la personne attend** est la première
-étape pour lui répondre.
+The challenge data is **not included** in this repository (it is not redistributable).
+Register on the [challenge page](https://challengedata.ens.fr/participants/challenges/17/)
+to download it, then place the files as follows:
 
-- **Entrée** : 8 028 questions d'entraînement en français, souvent écrites
-  rapidement (fautes, abréviations, absence d'accents), et 2 035 questions de test.
-- **Sortie** : l'identifiant anonymisé de l'intention (0 à 50).
-- **Benchmark de Posos** : un CNN au niveau des mots (vecteurs de dimension 128,
-  filtres de taille 3, 4 et 5, max-pooling, dropout 0,5), annoncé à 82 % sur un
-  jeu de 10 000 exemples. Les organisateurs suggéraient de pré-entraîner les
-  vecteurs de mots sur un plus grand corpus (word2vec) ou de détecter des
-  propriétés comme les noms de médicaments.
-
-## Résultats
-
-Score officiel calculé par la plateforme sur le jeu de test (labels non publics) :
-
-| Version | Approche | Score test |
+| File | Where | Content |
 |---|---|---|
-| 2019 | Ensemble de 6 réseaux GRU / CNN sur embeddings word2vec | 0,7583 |
-| 2026 | CamemBERT fine-tuné (un seul modèle) | 0,7898 |
-| **2026** | **Ensemble de 3 CamemBERT** (base, bio, v2) | **0,8124** |
-| *Référence* | *Benchmark de Posos (CNN)* | *0,8291* |
+| `input_train.csv` | `camembert/data/` | `ID,question`, 8,028 training questions |
+| `output_train.csv` | `camembert/data/` | `ID,intention`, labels 0–50 |
+| `input_test.csv` | `camembert/data/` | `ID,question`, 2,035 test questions (no labels) |
+| `correction.csv` | `camembert/data/` (included) | my hand-made dictionary of 1,861 spelling/accent fixes (2019) |
 
-Un seul transformer pré-entraîné en français fait déjà mieux que l'ensemble de 2019 ;
-la moyenne de trois variantes de CamemBERT gagne encore 2,3 points.
-[Classement public](https://challengedata.ens.fr/participants/challenges/17/ranking/public)
+Pretrained models are downloaded from the Hugging Face Hub:
+[camembert-base](https://huggingface.co/almanach/camembert-base),
+[camembert-bio-base](https://huggingface.co/almanach/camembert-bio-base),
+[camembertv2-base](https://huggingface.co/almanach/camembertv2-base),
+[camembertav2-base](https://huggingface.co/almanach/camembertav2-base),
+[Qwen2.5-7B](https://huggingface.co/Qwen/Qwen2.5-7B).
 
-## Évolution
+## Approach
 
-Chaque étape, avec l'accuracy sur la validation interne (choix des réglages) et,
-quand l'étape a été soumise, le score officiel sur le test.
+1. **A reliable evaluation first.** A single 15 % validation split (1,205 questions) turned
+   out to be noisy (±1 point between folds), so model comparisons use **5-fold
+   cross-validation** on all 8,028 questions (out-of-fold predictions).
+2. **One change at a time**, each measured, including the ideas that failed.
+3. **Error analysis** before trying new ideas: most remaining errors are confusions between
+   neighbouring intents (e.g. *side effects* vs *risks*, *missed dose* vs *dosing error*),
+   and a few percent of the errors look like debatable labels.
+4. **Ensembles of diverse models**: averaging the class probabilities of different
+   architectures gave the largest gains at the end.
 
-| # | Année | Étape | Validation | Test |
-|---|---|---|---|---|
-| 1 | 2019 | Un réseau GRU, texte nettoyé, embeddings word2vec | ≈ 66,8 % | |
-| 2 | 2019 | Réseaux GRU / CNN réglés, embeddings frWac et Wikipédia mélangés à un word2vec entraîné sur le corpus | 68,7 – 72,1 % | |
-| 3 | 2019 | Ensemble pondéré de 6 modèles | ≈ 75,1 % | **0,7583** |
-| 4 | 2026 | CamemBERT-base, 4 epochs, texte brut | 62,4 % | |
-| 5 | 2026 | + 8 epochs, perte pondérée par classe | 76,9 % | |
-| 6 | 2026 | + corrections orthographe/accents (dictionnaire de 2019) | 77,3 % | |
-| 7 | 2026 | + learning rate 5e-5 au lieu de 2e-5 | 80,4 % | 0,7898 |
-| 8 | 2026 | Ensemble : CamemBERT-base + CamemBERT-bio (médical) + CamemBERTv2 | 82,1 % | **0,8124** |
+## Results
 
-```mermaid
-xychart-beta
-    title "Accuracy sur la validation interne (%)"
-    x-axis ["1 GRU", "2 GRU/CNN", "3 Ensemble", "4 CamemBERT", "5 +poids", "6 +accents", "7 +lr", "8 Ensemble"]
-    y-axis "Accuracy (%)" 60 --> 85
-    bar [66.8, 72.1, 75.1, 62.4, 76.9, 77.3, 80.4, 82.1]
+### Official test score (computed by the platform on the public part of the test set)
+
+| Submission | Score |
+|---|---|
+| 2019 — ensemble of 6 GRU/CNN networks on word2vec embeddings | 0.7583 |
+| CamemBERT-base, tuned | 0.7898 |
+| **Ensemble: CamemBERT-base + CamemBERT-bio + CamemBERTv2** | **0.8124** |
+| *Reference: organisers' benchmark (CNN)* | *0.8291* |
+
+### Step by step (internal validation)
+
+| Step | Validation | Notes |
+|---|---|---|
+| CamemBERT-base, 4 epochs, raw text | 0.624 | 15 % split |
+| + 8 epochs, class-weighted loss | 0.769 | 51 classes, one class = 22 % of the data |
+| + spelling/accent dictionary | 0.773 | the 2019 cleaning had also deleted words like *pendant*, *avant*, *avec* (they were in its stop-word list), which carry the intent |
+| **+ learning rate 5e-5 instead of 2e-5** | **0.804** | the model was under-fitting: the single most useful change |
+| Ensemble base + bio + v2 | 0.821 | 15 % split; 0.8124 on the official test |
+
+**5-fold cross-validation (8,028 questions):**
+
+| Model | Accuracy |
+|---|---|
+| CamemBERT-bio (biomedical French) | **0.7958** |
+| CamemBERTv2 | 0.7871 |
+| CamemBERTaV2 | 0.7854 |
+| CamemBERT-base | 0.7839 |
+| Ensemble of the 4 | **0.8094** |
+| Ensemble of 3 (without CamemBERTaV2) | 0.8052 |
+
+**Qwen2.5-7B fine-tuned as a classifier** (QLoRA 4-bit, LoRA r=16, 2 epochs, free Colab T4),
+evaluated on fold 0 of the same cross-validation (1,606 questions):
+
+| Fold 0 | Accuracy |
+|---|---|
+| Qwen2.5-7B alone | **0.8120** (best single model) |
+| Best CamemBERT alone (CamemBERTaV2 / bio) | 0.8045 / 0.8039 |
+| Ensemble of the 4 CamemBERT | 0.8188 |
+| 4 CamemBERT + Qwen2.5-7B (equal weights) | 0.8288 |
+| 4 CamemBERT + Qwen2.5-7B (weight 2) | 0.8362 (weight chosen on this same fold) |
+
+### What did not work (or not enough)
+
+| Idea | Measured effect |
+|---|---|
+| fp16 mixed precision on the GTX 1080 Ti (Pascal, no Tensor Cores) | training ~45 % **slower** than fp32 |
+| Adding a weaker variant of the same model (CamemBERT v3 + v4) | 0.8033 vs 0.8041 alone |
+| Post-hoc prior correction of the class weights | +0.25 pt, within noise |
+| Label smoothing 0.1 (CamemBERT-bio, 4 folds) | −0.16 pt alone, −0.41 pt in the ensemble |
+| CamemBERTaV2 alone | no better than CamemBERT-base… but +0.42 pt in the ensemble (different errors) |
+| **LLM arbiter** for uncertain cases (Qwen2.5-Coder-14B via Ollama chooses between the two top intents) | +0.47 pt on the 4-CamemBERT ensemble (54 answers fixed, 16 broken, 720 cases), but only +0.12 pt once Qwen2.5-7B is in the ensemble: not used |
+
+### The 51 intents, decoded
+
+The intents are anonymised (numbers 0–50). Reading examples of each class gives their
+meaning (my interpretation, except 1 = *other* and 39 = *multiple*, which are official):
+
+- **Side effects**: 28 side effects (22 % of questions) · 11 what to do about a side effect ·
+  27 duration of side effects · 21 stopping / withdrawal · 48 risks and danger
+- **How to take it**: 42 dosage · 38 time of intake · 14 instructions for use · 35 route of
+  administration · 36 preparation / dilution · 15 patches · 49 can the tablet be split
+- **Intake errors**: 13 missed dose · 12 what to do after a dosing error
+- **Safety**: 43 contraindications · 44 pregnancy, breastfeeding, children ·
+  34 drug interactions · 33 alcohol, driving, lifestyle
+- **What it is for**: 31 indications · 32 which treatment for a symptom ·
+  37 mechanism of action · 22 general information
+- **Timing**: 23 onset of action · 26 duration of action · 41 pharmacokinetics
+- **Storage**: 7 storage · 16 after opening · 17 cold chain break · 19 expired medicine
+- **The product**: 5 composition · 40 origin of ingredients · 4 therapeutic class ·
+  30 dosage form · 25 available strengths · 6 packaging
+- **Names and generics**: 20 brand name of a molecule · 45 generic of a drug ·
+  50 generic substitution · 0 therapeutic alternative · 10 switching treatments
+- **Market**: 24 availability · 3 cause of a shortage · 29 does a product exist ·
+  18 marketing authorisation date
+- **Administrative**: 8 dispensing rules · 9 prescription rules · 46 price · 47 reimbursement
+- **Official catch-alls**: 1 other · 39 multiple questions
+
+This explains most confusions: the dataset separates very close intents (four about storage,
+five around side effects).
+
+## Repository layout
+
+| Path | Content |
+|---|---|
+| `camembert/train.py` | fine-tuning (`--model`, `--lr`, `--epochs`, `--class-weights`, `--clean`, `--folds/--fold`, `--full`, `--label-smoothing`) |
+| `camembert/predict.py` | test predictions in the platform format + class probabilities |
+| `camembert/clean.py` | spelling/accent correction with the dictionary, nothing else changed |
+| `camembert/ensemble.py` | evaluate models and ensembles on cross-validation (`oof`), weighted average of test probabilities (`test`) |
+| `camembert/subs.py` | local registry of submissions and their platform scores |
+| `camembert/colab/posos_qwen7b_lora.ipynb` | Qwen2.5-7B QLoRA classifier on a free Colab T4 |
+| `camembert/agent/` | side project: *Posos Arena* (Gradio demo: classify a question, play human vs model) and LLM agents that try to decode the intents (smolagents agent vs LlamaIndex workflow), plus the LLM arbiter |
+| `2019_keras/posos.py` | the original 2019 code (Keras), kept as is |
+| `docs/NOTE_PASSATION.md` | lab notebook (in French): every run, decision and dead end |
+
+## How to reproduce
+
+```bash
+cd camembert
+conda create -y -n posos python=3.11 && conda activate posos
+pip install torch==2.4.1 --index-url https://download.pytorch.org/whl/cu121   # Pascal GPU
+pip install -r requirements.txt
+
+# 1. Cross-validation of one model (repeat for --fold 0..4, and for each model)
+python train.py --model almanach/camembert-bio-base --folds 5 --fold 0 --epochs 8 \
+                --lr 5e-5 --class-weights --clean --out cv_bio_f0
+python ensemble.py oof "cv_base_f*" "cv_bio_f*" "cv_v2_f*" "cv_av2_f*"
+
+# 2. Final models on 100 % of the data, then test probabilities
+python train.py --model almanach/camembert-bio-base --full --epochs 8 --lr 5e-5 \
+                --class-weights --clean --out model_bio_full
+python predict.py --model model_bio_full --clean --out bio.csv        # -> bio_probs.npy
+#    (same for camembert-base 6 ep, camembertv2-base 6 ep, camembertav2-base 8 ep)
+
+# 3. Qwen2.5-7B: run colab/posos_qwen7b_lora.ipynb with MODE = "full" -> qwen7b_full.npz
+
+# 4. Weighted ensemble -> submission.csv
+python ensemble.py test base_probs.npy bio_probs.npy v2_probs.npy av2_probs.npy \
+                   qwen7b_full.npz --weights 1 1 1 1 2
 ```
 
-Les validations de 2019 (10 % des données) et de 2026 (15 %) ne portent pas sur
-les mêmes questions : seules les colonnes « Test » se comparent directement. Pour
-l'étape 2, le graphique montre le meilleur modèle seul.
+Training one CamemBERT takes about 5 minutes on a GTX 1080 Ti; the 7B model about
+40–50 minutes on a Colab T4.
 
-## Contenu du dépôt
+## Limitations
 
-| Dossier | Contenu |
-|---|---|
-| [`camembert/`](camembert/) | Version actuelle : fine-tuning de CamemBERT (PyTorch / 🤗 Transformers) |
-| [`2019_keras/`](2019_keras/) | Version d'origine (Keras, 2019), conservée telle quelle |
-
-## Ce qui a changé entre 2019 et 2026
-
-- **Modèle** : les embeddings word2vec et les réseaux GRU/CNN entraînés de zéro sont
-  remplacés par [CamemBERT](https://huggingface.co/almanach/camembert-base), déjà
-  pré-entraîné sur du français, puis fine-tuné sur les 8 028 questions.
-- **Prétraitement** : en 2019, le texte était mis en minuscules, la ponctuation, les
-  chiffres et les mots vides étaient retirés. Or des mots comme *pendant*, *avant*,
-  *après* ou *avec* portent justement l'intention (« pendant la grossesse », « avec de
-  l'alcool »). On garde désormais le texte intact et on applique seulement le
-  dictionnaire de corrections orthographiques et d'accents constitué en 2019
-  (1 861 entrées, par ex. *gelules* → *gélules*).
-- **Évaluation** : une validation stratifiée de 15 % sert à choisir les réglages ;
-  le modèle final est ensuite réentraîné sur toutes les données.
-- **Ensemble** : comme en 2019, moyenner des modèles qui se trompent différemment
-  paie. CamemBERT-bio (pré-entraîné sur des textes biomédicaux) et CamemBERTv2
-  sont chacun meilleurs que CamemBERT-base, et leur moyenne avec lui corrige
-  environ 20 erreurs de plus sur la validation.
-- **Réglages qui ont compté** : un learning rate de 5e-5 au lieu de 2e-5 (+3 points
-  en validation) et une perte pondérée par classe, les 51 intentions étant très
-  déséquilibrées (une classe couvre 22 % des questions).
-
-Les données du challenge ne sont pas redistribuées ici : elles sont disponibles sur
-le site du challenge après inscription.
+- The official score is computed on the public part of the test set (about 1,018 questions),
+  so one question is worth about 0.1 point.
+- Internal scores from 2019 and 2026 use different splits; only the official test scores
+  compare directly.
+- The weight of Qwen2.5-7B in the ensemble was chosen on fold 0 only (1,606 questions);
+  Qwen2.5-7B was trained once (one seed).
+- Several percent of the remaining errors look like ambiguous or debatable labels, which
+  caps what any model can reach on this dataset.
+- The intent names are my reading of the training examples, not official labels
+  (except 1 and 39).
