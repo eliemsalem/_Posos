@@ -23,6 +23,9 @@ from outils import (PROJET, MODELES_VAL, classer_question, confusions_intention,
                     donnees, ensemble, exemples_intention, predictions_validation)
 
 NOMS_FICHIER = PROJET / "agent" / "intentions.json"
+# POSOS_DEMO=1 : rien de ce qui vient des données du challenge n'est affiché (pour enregistrer
+# une démo publique) : pas de questions semblables, pas de jeu, pas de détective.
+DEMO = os.environ.get("POSOS_DEMO") == "1"
 AVERTISSEMENT = ("⚠️ Démo d'un modèle de classification, pas un avis médical. "
                  "Pour toute question sur un traitement, demandez à votre pharmacien ou médecin.")
 
@@ -59,6 +62,8 @@ def deviner(question):
     p = np.mean(probs, axis=0)
     n = noms()
     top = int(p.argmax())
+    if DEMO:
+        return {n[i]: float(p[i]) for i in np.argsort(p)[::-1][:5]}, ""
     voisines = donnees()[donnees()["intention"] == top]["question"].sample(4)
     md = f"**Questions d'entraînement de la même intention ({n[top]}) :**\n\n"
     md += "\n".join(f"- {q[:160]}" for q in voisines)
@@ -190,34 +195,35 @@ with gr.Blocks(title="Posos Arena", theme=gr.themes.Soft()) as demo:
         bouton.click(deviner, q, [barres, semblables])
         q.submit(deviner, q, [barres, semblables])
 
-    with gr.Tab("🎮 Humain vs CamemBERT"):
-        gr.Markdown("Une vraie question du challenge, 4 intentions possibles (chacune illustrée par "
-                    "un exemple). Sauras-tu faire mieux que le modèle ?")
-        etat = gr.State({"n": 0, "humain": 0, "modele": 0})
-        score = gr.Markdown(tableau({}))
-        question = gr.Markdown()
-        choix = gr.Radio(label="Quelle est l'intention ?", choices=[])
-        with gr.Row():
-            valider = gr.Button("Valider", variant="primary")
-            suivante = gr.Button("Question suivante")
-        verdict = gr.Markdown()
-        sorties = [etat, question, choix, verdict, score]
-        suivante.click(nouvelle_manche, etat, sorties)
-        valider.click(jouer, [choix, etat], [etat, choix, verdict, score])
-        demo.load(nouvelle_manche, etat, sorties)
+    if not DEMO:   # ces onglets affichent des questions du challenge
+        with gr.Tab("🎮 Humain vs CamemBERT"):
+            gr.Markdown("Une vraie question du challenge, 4 intentions possibles (chacune illustrée par "
+                        "un exemple). Sauras-tu faire mieux que le modèle ?")
+            etat = gr.State({"n": 0, "humain": 0, "modele": 0})
+            score = gr.Markdown(tableau({}))
+            question = gr.Markdown()
+            choix = gr.Radio(label="Quelle est l'intention ?", choices=[])
+            with gr.Row():
+                valider = gr.Button("Valider", variant="primary")
+                suivante = gr.Button("Question suivante")
+            verdict = gr.Markdown()
+            sorties = [etat, question, choix, verdict, score]
+            suivante.click(nouvelle_manche, etat, sorties)
+            valider.click(jouer, [choix, etat], [etat, choix, verdict, score])
+            demo.load(nouvelle_manche, etat, sorties)
 
-    with gr.Tab("🕵️ Le détective"):
-        gr.Markdown("Choisis une intention anonyme : un agent (smolagents + qwen2.5-coder:14b via Ollama) "
-                    "lit des exemples, compare avec les intentions voisines, teste ses hypothèses "
-                    "avec le modèle… et lui donne un nom.")
-        with gr.Row():
-            numero = gr.Dropdown(choices=list(range(51)), value=43, label="Intention")
-            voir = gr.Button("📂 Voir le dossier")
-            lancer = gr.Button("🕵️ Lancer l'enquête", variant="primary")
-        dossier = gr.Textbox(label="Dossier de l'intention", lines=12)
-        enquete = gr.Chatbot(type="messages", height=500, label="Enquête en direct")
-        voir.click(fiche, numero, dossier)
-        lancer.click(enqueter, numero, enquete)
+        with gr.Tab("🕵️ Le détective"):
+            gr.Markdown("Choisis une intention anonyme : un agent (smolagents + qwen2.5-coder:14b via Ollama) "
+                        "lit des exemples, compare avec les intentions voisines, teste ses hypothèses "
+                        "avec le modèle… et lui donne un nom.")
+            with gr.Row():
+                numero = gr.Dropdown(choices=list(range(51)), value=43, label="Intention")
+                voir = gr.Button("📂 Voir le dossier")
+                lancer = gr.Button("🕵️ Lancer l'enquête", variant="primary")
+            dossier = gr.Textbox(label="Dossier de l'intention", lines=12)
+            enquete = gr.Chatbot(type="messages", height=500, label="Enquête en direct")
+            voir.click(fiche, numero, dossier)
+            lancer.click(enqueter, numero, enquete)
 
 if __name__ == "__main__":
     demo.launch(server_name="127.0.0.1")   # local uniquement : les données du challenge restent privées

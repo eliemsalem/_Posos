@@ -19,6 +19,19 @@ stayed open and later participants have passed it since (best: 0.7935 in 2022).
   <img src="docs/attestation.jpeg" alt="Challenge Data 2018 prize certificate, best participant, Posos challenge" width="520">
 </p>
 
+## Demo: Posos Arena
+
+<p align="center">
+  <img src="docs/posos_arena.gif" alt="Posos Arena: typing a question about a medicine and seeing the predicted intents" width="560">
+</p>
+
+A small local web app (Gradio) built while following the Hugging Face
+[AI Agents course](https://huggingface.co/learn/agents-course): type a question about a medicine
+and see the intents predicted by the CamemBERT ensemble. The full version also has a game
+(*human vs CamemBERT*) and a *detective* tab where an LLM agent investigates an anonymised
+intent live. The questions in this recording are invented; the app's demo mode
+(`POSOS_DEMO=1`) hides everything that comes from the challenge data.
+
 ## Data
 
 The challenge data is **not included** in this repository (it is not redistributable).
@@ -155,7 +168,7 @@ five around side effects).
 | `camembert/colab/posos_llm7b_lora.ipynb` | 7B LLM (Qwen, Mistral…) QLoRA classifier on a free Colab or Kaggle T4 (model, seed and mode as parameters) |
 | `camembert/colab/posos_qwen7b_lora.ipynb` | first version, Qwen2.5-7B only |
 | `camembert/colab/posos_arbitre.ipynb` | the LLM arbiter (Ollama) on a Colab T4 |
-| `camembert/agent/` | side project: *Posos Arena* (Gradio demo: classify a question, play human vs model) and LLM agents that try to decode the intents (smolagents agent vs LlamaIndex workflow), plus the LLM arbiter |
+| `camembert/agent/` | side project: *Posos Arena* (Gradio app: `python agent/app.py`, or `POSOS_DEMO=1` to hide the challenge data), LLM agents that try to decode the intents (smolagents agent vs LlamaIndex workflow), and the LLM arbiter |
 | `2019_keras/posos.py` | the original 2019 code (Keras), kept as is |
 | `docs/NOTE_PASSATION.md` | lab notebook (in French): every run, decision and dead end |
 
