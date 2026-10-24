@@ -11,7 +11,9 @@ replacing a GRU/CNN + word2vec ensemble with fine-tuned French transformers, the
 two 7B LLMs (Qwen2.5, Mistral) fine-tuned as classifiers.
 
 🏆 **Challenge Data 2018 prize — best participant** of the Posos challenge
-(*Predict the expected answer!*, ENS Challenge Data).
+(*Predict the expected answer!*, ENS Challenge Data): my May 2019 submission was first
+among participants on the private leaderboard when the season closed (0.7512); the challenge
+stayed open and later participants have passed it since (best: 0.7935 in 2022).
 
 <p align="center">
   <img src="docs/attestation.jpeg" alt="Challenge Data 2018 prize certificate, best participant, Posos challenge" width="520">
