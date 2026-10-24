@@ -4,10 +4,10 @@ Given a question written by a patient or a health professional about a medicine
 (« Peut-on prendre du Doliprane pendant la grossesse ? »), predict which of **51 intents**
 it expresses (side effects, dosage, pregnancy, contraindications, price…). Metric: accuracy.
 
-**Result: 0.7583 in 2019 → 0.8281 in 2026** on the official test set (843 of about
-1,018 public questions; the organisers' benchmark gets 844), by replacing a GRU/CNN +
-word2vec ensemble with fine-tuned French transformers, then adding a 7B LLM fine-tuned
-as a classifier.
+**Result: 0.7583 in 2019 → 0.8301 in 2026** on the official test set (845 of about
+1,018 public questions), **above the organisers' benchmark (0.8291, 844 questions)**, by
+replacing a GRU/CNN + word2vec ensemble with fine-tuned French transformers, then adding
+two 7B LLMs (Qwen2.5, Mistral) fine-tuned as classifiers.
 
 🏆 **Challenge Data 2018 prize — best participant** of the Posos challenge
 (*Predict the expected answer!*, ENS Challenge Data).
@@ -59,6 +59,7 @@ Pretrained models are downloaded from the Hugging Face Hub:
 | Ensemble: CamemBERT-base + CamemBERT-bio + CamemBERTv2 | 0.8124 |
 | **Ensemble: 4 CamemBERT + Qwen2.5-7B QLoRA (weight 2)** | **0.8281** |
 | Same + LLM arbiter on the 136 most uncertain questions (22 answers changed) | 0.8271 |
+| **Ensemble: 4 CamemBERT + Qwen2.5-7B (2 seeds) + Mistral-7B, QLoRA** | **0.8301** |
 | *Reference: organisers' benchmark (CNN)* | *0.8291* |
 
 ### Step by step (internal validation)
@@ -82,8 +83,8 @@ Pretrained models are downloaded from the Hugging Face Hub:
 | Ensemble of the 4 | **0.8094** |
 | Ensemble of 3 (without CamemBERTaV2) | 0.8052 |
 
-**Qwen2.5-7B fine-tuned as a classifier** (QLoRA 4-bit, LoRA r=16, 2 epochs, free Colab T4),
-evaluated on fold 0 of the same cross-validation (1,606 questions):
+**7B LLMs fine-tuned as classifiers** (QLoRA 4-bit, LoRA r=16, 2 epochs, free Colab / Kaggle
+T4), evaluated on fold 0 of the same cross-validation (1,606 questions):
 
 | Fold 0 | Accuracy |
 |---|---|
@@ -92,6 +93,12 @@ evaluated on fold 0 of the same cross-validation (1,606 questions):
 | Ensemble of the 4 CamemBERT | 0.8188 |
 | 4 CamemBERT + Qwen2.5-7B (equal weights) | 0.8288 |
 | 4 CamemBERT + Qwen2.5-7B (weight 2) | 0.8362 (weight chosen on this same fold) |
+| Mistral-7B-v0.3 alone | 0.8014 (agrees with Qwen on only 82.6 % of questions) |
+| **4 CamemBERT + Qwen2.5-7B + Mistral-7B (equal weights)** | **0.8431** |
+
+Mistral is weaker than Qwen on its own, but it makes different mistakes, so it adds more to
+the ensemble than a heavier weight on Qwen. Two Qwen trainings with different seeds agree on
+only 88.5 % of the test questions: averaging seeds reduces this noise.
 
 ### What did not work (or not enough)
 
@@ -141,7 +148,9 @@ five around side effects).
 | `camembert/clean.py` | spelling/accent correction with the dictionary, nothing else changed |
 | `camembert/ensemble.py` | evaluate models and ensembles on cross-validation (`oof`), weighted average of test probabilities (`test`) |
 | `camembert/subs.py` | local registry of submissions and their platform scores |
-| `camembert/colab/posos_qwen7b_lora.ipynb` | Qwen2.5-7B QLoRA classifier on a free Colab T4 |
+| `camembert/colab/posos_llm7b_lora.ipynb` | 7B LLM (Qwen, Mistral…) QLoRA classifier on a free Colab or Kaggle T4 (model, seed and mode as parameters) |
+| `camembert/colab/posos_qwen7b_lora.ipynb` | first version, Qwen2.5-7B only |
+| `camembert/colab/posos_arbitre.ipynb` | the LLM arbiter (Ollama) on a Colab T4 |
 | `camembert/agent/` | side project: *Posos Arena* (Gradio demo: classify a question, play human vs model) and LLM agents that try to decode the intents (smolagents agent vs LlamaIndex workflow), plus the LLM arbiter |
 | `2019_keras/posos.py` | the original 2019 code (Keras), kept as is |
 | `docs/NOTE_PASSATION.md` | lab notebook (in French): every run, decision and dead end |
@@ -165,11 +174,14 @@ python train.py --model almanach/camembert-bio-base --full --epochs 8 --lr 5e-5 
 python predict.py --model model_bio_full --clean --out bio.csv        # -> bio_probs.npy
 #    (same for camembert-base 6 ep, camembertv2-base 6 ep, camembertav2-base 8 ep)
 
-# 3. Qwen2.5-7B: run colab/posos_qwen7b_lora.ipynb with MODE = "full" -> qwen7b_full.npz
+# 3. 7B LLMs: run colab/posos_llm7b_lora.ipynb with MODE = "full"
+#    MODELE = "Qwen/Qwen2.5-7B", SEED = 42 -> qwen7b_full.npz ; SEED = 7 -> qwen7b_s2_full.npz
+#    MODELE = "mistralai/Mistral-7B-v0.3" (gated: HF token) -> mistral7b_full.npz
 
 # 4. Weighted ensemble -> submission.csv
 python ensemble.py test base_probs.npy bio_probs.npy v2_probs.npy av2_probs.npy \
-                   qwen7b_full.npz --weights 1 1 1 1 2
+                   qwen7b_full.npz qwen7b_s2_full.npz mistral7b_full.npz \
+                   --weights 1 1 1 1 0.5 0.5 1
 ```
 
 Training one CamemBERT takes about 5 minutes on a GTX 1080 Ti; the 7B model about
@@ -181,8 +193,10 @@ Training one CamemBERT takes about 5 minutes on a GTX 1080 Ti; the 7B model abou
   so one question is worth about 0.1 point.
 - Internal scores from 2019 and 2026 use different splits; only the official test scores
   compare directly.
-- The weight of Qwen2.5-7B in the ensemble was chosen on fold 0 only (1,606 questions);
-  Qwen2.5-7B was trained once (one seed).
+- The LLMs were evaluated on fold 0 only (1,606 questions), not on all 5 folds: the
+  ensemble weights rest on that single fold.
+- The margin over the benchmark is one question on the public test set; the private
+  leaderboard may differ.
 - Several percent of the remaining errors look like ambiguous or debatable labels, which
   caps what any model can reach on this dataset.
 - The intent names are my reading of the training examples, not official labels

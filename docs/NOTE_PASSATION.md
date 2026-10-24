@@ -121,3 +121,18 @@ bio 0,7958 · v2 0,7871 · av2 0,7854 · base 0,7839 · ensemble des 4 = 0,8094.
 **À côté** : `agent/` = Posos Arena (Gradio, `python agent/app.py`), 51 intentions décodées
 (`agent/intentions.json`), détectives Qwen (agent libre / workflow LlamaIndex).
 Projet frère : `~/Documents/Hugging-Face/kili_data_centric` (mémo `MEMO_DEPUIS_POSOS.md`).
+
+## Résultats du 2026-10-23 au soir
+- `ens5_qwen_w2` (4 CamemBERT + Qwen2.5-7B, poids 2) : **0,82809 = 843/1018** → MEILLEUR SCORE.
+  Benchmark Posos 0,8291 = 844/1018 : il manque UNE question pour l'égaler, deux pour le battre.
+- `ens5_qwen_w2_arbitre` (même chose + arbitre Qwen 14B sur 136 questions hésitantes, via Colab) :
+  0,82711 = 842/1018 (−1). L'arbitre n'aide plus une fois Qwen 7B dans l'ensemble.
+- GitHub mis à jour (README anglais, 0,8281). Pistes restantes : 2e seed de Qwen 7B (Colab),
+  camembert-large, poids de Qwen à affiner avec plus d'un pli.
+
+## 2026-10-24 : BENCHMARK BATTU
+- `ens7_qwen2_mistral` = 4 CamemBERT (1) + Qwen2.5-7B seeds 42 et 7 (0,5 + 0,5) + Mistral-7B-v0.3 (1) :
+  **0,83006 = 845/1018** > benchmark Posos 0,8291 (844/1018). Meilleur score du projet.
+- Mistral-7B : 0,8014 seul sur le pli 0, mais accord de 82,6 % seulement avec Qwen → ensemble
+  0,8431 sur le pli 0 (contre 0,8362 sans lui). Notebooks : `colab/posos_mistral7b.ipynb`,
+  `colab/posos_qwen7b_s2.ipynb` (Kaggle). Probas : `colab/*_full.npz`.
