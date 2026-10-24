@@ -4,7 +4,7 @@ Given a question written by a patient or a health professional about a medicine
 (« Peut-on prendre du Doliprane pendant la grossesse ? »), predict which of **51 intents**
 it expresses (side effects, dosage, pregnancy, contraindications, price…). Metric: accuracy.
 
-**Result: 0.7583 in 2019 → 0.8301 in 2026** on the official test set (845 of about
+**Result: 0.7583 in 2019 → 0.8310 in 2026** on the official test set (846 of about
 1,018 public questions), **above the organisers' benchmark (0.8291, 844 questions)**, by
 replacing a GRU/CNN + word2vec ensemble with fine-tuned French transformers, then adding
 two 7B LLMs (Qwen2.5, Mistral) fine-tuned as classifiers.
@@ -59,7 +59,8 @@ Pretrained models are downloaded from the Hugging Face Hub:
 | Ensemble: CamemBERT-base + CamemBERT-bio + CamemBERTv2 | 0.8124 |
 | **Ensemble: 4 CamemBERT + Qwen2.5-7B QLoRA (weight 2)** | **0.8281** |
 | Same + LLM arbiter on the 136 most uncertain questions (22 answers changed) | 0.8271 |
-| **Ensemble: 4 CamemBERT + Qwen2.5-7B (2 seeds) + Mistral-7B, QLoRA** | **0.8301** |
+| Ensemble: 4 CamemBERT + Qwen2.5-7B (2 seeds) + Mistral-7B, QLoRA | 0.8301 |
+| **Ensemble: 4 CamemBERT + Qwen2.5-7B + Mistral-7B, equal weights** (the recipe validated on fold 0) | **0.8310** |
 | *Reference: organisers' benchmark (CNN)* | *0.8291* |
 
 ### Step by step (internal validation)
@@ -178,10 +179,9 @@ python predict.py --model model_bio_full --clean --out bio.csv        # -> bio_p
 #    MODELE = "Qwen/Qwen2.5-7B", SEED = 42 -> qwen7b_full.npz ; SEED = 7 -> qwen7b_s2_full.npz
 #    MODELE = "mistralai/Mistral-7B-v0.3" (gated: HF token) -> mistral7b_full.npz
 
-# 4. Weighted ensemble -> submission.csv
+# 4. Ensemble with equal weights -> submission.csv (best official score, 0.8310)
 python ensemble.py test base_probs.npy bio_probs.npy v2_probs.npy av2_probs.npy \
-                   qwen7b_full.npz qwen7b_s2_full.npz mistral7b_full.npz \
-                   --weights 1 1 1 1 0.5 0.5 1
+                   qwen7b_full.npz mistral7b_full.npz
 ```
 
 Training one CamemBERT takes about 5 minutes on a GTX 1080 Ti; the 7B model about
@@ -195,8 +195,9 @@ Training one CamemBERT takes about 5 minutes on a GTX 1080 Ti; the 7B model abou
   compare directly.
 - The LLMs were evaluated on fold 0 only (1,606 questions), not on all 5 folds: the
   ensemble weights rest on that single fold.
-- The margin over the benchmark is one question on the public test set; the private
-  leaderboard may differ.
+- The margin over the benchmark is two questions on the public test set; the private
+  leaderboard may differ. Averaging a second Qwen seed did not help here (0.8301 vs 0.8310,
+  one question: within noise).
 - Several percent of the remaining errors look like ambiguous or debatable labels, which
   caps what any model can reach on this dataset.
 - The intent names are my reading of the training examples, not official labels

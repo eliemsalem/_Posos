@@ -136,3 +136,6 @@ Projet frère : `~/Documents/Hugging-Face/kili_data_centric` (mémo `MEMO_DEPUIS
 - Mistral-7B : 0,8014 seul sur le pli 0, mais accord de 82,6 % seulement avec Qwen → ensemble
   0,8431 sur le pli 0 (contre 0,8362 sans lui). Notebooks : `colab/posos_mistral7b.ipynb`,
   `colab/posos_qwen7b_s2.ipynb` (Kaggle). Probas : `colab/*_full.npz`.
+- `ens6_qwen_mistral` (4 CamemBERT + Qwen seed 42 + Mistral, poids égaux, la recette exacte du pli 0) :
+  **0,83104 = 846/1018** → NOUVEAU MEILLEUR SCORE (+2 sur le benchmark).
+  La moyenne des 2 seeds de Qwen (`ens7`, 845) n'a pas aidé ici : différence d'une question, du bruit.
