@@ -4,8 +4,9 @@ Given a question written by a patient or a health professional about a medicine
 (« Peut-on prendre du Doliprane pendant la grossesse ? »), predict which of **51 intents**
 it expresses (side effects, dosage, pregnancy, contraindications, price…). Metric: accuracy.
 
-**Result: 0.7583 in 2019 → 0.8310 in 2026** on the official test set (846 of about
-1,018 public questions), **above the organisers' benchmark (0.8291, 844 questions)**, by
+**Result: 0.7583 in 2019 → 0.8310 in 2026** on the public leaderboard (846 of about
+1,018 public questions), **above the organisers' benchmark on that leaderboard (0.8291)**
+and well above the best other participant on the private leaderboard (0.7935), by
 replacing a GRU/CNN + word2vec ensemble with fine-tuned French transformers, then adding
 two 7B LLMs (Qwen2.5, Mistral) fine-tuned as classifiers.
 
@@ -195,8 +196,10 @@ Training one CamemBERT takes about 5 minutes on a GTX 1080 Ti; the 7B model abou
   compare directly.
 - The LLMs were evaluated on fold 0 only (1,606 questions), not on all 5 folds: the
   ensemble weights rest on that single fold.
-- The margin over the benchmark is two questions on the public test set; the private
-  leaderboard may differ. Averaging a second Qwen seed did not help here (0.8301 vs 0.8310,
+- The margin over the benchmark is two questions on the **public** test set only. The
+  private leaderboard (the other half of the test set, updated every 15 June and
+  15 December) shows the benchmark at 0.8604, out of reach; the private score of this
+  submission is not known yet. Averaging a second Qwen seed did not help here (0.8301 vs 0.8310,
   one question: within noise).
 - Several percent of the remaining errors look like ambiguous or debatable labels, which
   caps what any model can reach on this dataset.
